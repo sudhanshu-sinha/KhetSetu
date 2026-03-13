@@ -71,7 +71,7 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.index({ 'location': '2dsphere' });
-userSchema.index({ phone: 1 });
+// Ensure phone number and role combination is unique (optional, currently phone is globally unique)
 
 userSchema.methods.toJSON = function () {
   const user = this.toObject();

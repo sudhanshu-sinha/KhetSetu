@@ -18,6 +18,6 @@ const walletSchema = new mongoose.Schema({
   premiumExpiry: Date,
 }, { timestamps: true });
 
-walletSchema.index({ userId: 1 });
+// walletSchema.index({ userId: 1 }); // Removed to prevent duplicate index warning
 
 module.exports = mongoose.model('Wallet', walletSchema);
