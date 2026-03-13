@@ -1,0 +1,251 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-[#f8fafc] text-gray-900 dark:bg-slate-950 dark:text-gray-100;
+    font-family: 'Outfit', 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    @apply bg-primary-500/20 text-primary-900 dark:text-primary-200;
+  }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-primary-300/50 dark:bg-primary-700/50 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-primary-400/70; }
+}
+
+@layer components {
+  /* ═══════════════════════════════════════
+     BUTTONS — Premium gradient system
+     ═══════════════════════════════════════ */
+  .btn-primary {
+    @apply relative bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 text-white font-semibold
+           py-3.5 px-7 rounded-2xl overflow-hidden
+           shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/40
+           active:scale-[0.97] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary::after {
+    content: '';
+    @apply absolute inset-0 bg-shimmer bg-[length:200%_100%] animate-shimmer opacity-0 hover:opacity-100 transition-opacity;
+  }
+
+  .btn-secondary {
+    @apply bg-white/80 dark:bg-white/5 text-gray-700 dark:text-gray-200 font-medium
+           py-3.5 px-7 rounded-2xl backdrop-blur-sm
+           border border-gray-200/80 dark:border-white/10
+           hover:bg-white dark:hover:bg-white/10 hover:border-primary-300 dark:hover:border-primary-500/30
+           active:scale-[0.97] transition-all duration-300;
+  }
+
+  .btn-gold {
+    @apply bg-gradient-to-r from-gold-400 via-gold-500 to-gold-600 text-white font-semibold
+           py-3.5 px-7 rounded-2xl
+           shadow-lg shadow-gold-500/25 hover:shadow-xl hover:shadow-gold-500/40
+           active:scale-[0.97] transition-all duration-300;
+  }
+
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-500 to-rose-600 text-white font-semibold py-3.5 px-7 rounded-2xl
+           shadow-lg shadow-red-500/25 hover:shadow-xl active:scale-[0.97] transition-all duration-300;
+  }
+
+  .btn-ghost {
+    @apply text-gray-600 dark:text-gray-400 font-medium py-3 px-5 rounded-2xl
+           hover:bg-gray-100 dark:hover:bg-white/5 active:scale-[0.97] transition-all duration-200;
+  }
+
+  /* ═══════════════════════════════════════
+     CARDS — Glassmorphism 2.0
+     ═══════════════════════════════════════ */
+  .card {
+    @apply bg-white/80 dark:bg-white/[0.04] backdrop-blur-xl
+           rounded-3xl p-5
+           border border-gray-100/80 dark:border-white/[0.06]
+           shadow-lg shadow-gray-200/30 dark:shadow-black/20
+           transition-all duration-500;
+  }
+
+  .card-hover {
+    @apply card cursor-pointer
+           hover:shadow-card-hover dark:hover:shadow-primary-900/20
+           hover:-translate-y-1 hover:border-primary-200/50 dark:hover:border-primary-500/20;
+  }
+
+  .card-glass {
+    @apply bg-white/10 dark:bg-white/[0.03] backdrop-blur-2xl
+           rounded-3xl p-5
+           border border-white/20 dark:border-white/[0.08]
+           shadow-premium dark:shadow-premium-dark;
+  }
+
+  .card-gradient {
+    @apply relative rounded-3xl p-5 overflow-hidden;
+    background: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(245,158,11,0.03) 100%);
+  }
+  .dark .card-gradient {
+    background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(245,158,11,0.04) 100%);
+  }
+  .card-gradient::before {
+    content: '';
+    @apply absolute inset-0 rounded-3xl;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(16,185,129,0.3), rgba(245,158,11,0.2), rgba(16,185,129,0.1));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  /* ═══════════════════════════════════════
+     INPUTS — Premium glass style
+     ═══════════════════════════════════════ */
+  .input-field {
+    @apply w-full px-4 py-3.5 rounded-2xl
+           bg-gray-50/80 dark:bg-white/[0.04] backdrop-blur-sm
+           border border-gray-200/80 dark:border-white/[0.08]
+           text-gray-900 dark:text-gray-100
+           placeholder-gray-400 dark:placeholder-gray-600
+           focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500/50
+           transition-all duration-300;
+  }
+
+  /* ═══════════════════════════════════════
+     BADGES — Premium pill system
+     ═══════════════════════════════════════ */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide;
+  }
+  .badge-green  { @apply badge bg-primary-100/80 text-primary-700 dark:bg-primary-500/15 dark:text-primary-400; }
+  .badge-yellow { @apply badge bg-gold-100/80 text-gold-700 dark:bg-gold-500/15 dark:text-gold-400; }
+  .badge-red    { @apply badge bg-red-100/80 text-red-700 dark:bg-red-500/15 dark:text-red-400; }
+  .badge-blue   { @apply badge bg-blue-100/80 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400; }
+  .badge-purple { @apply badge bg-purple-100/80 text-purple-700 dark:bg-purple-500/15 dark:text-purple-400; }
+
+  /* ═══════════════════════════════════════
+     GLASS — Ultra glassmorphism
+     ═══════════════════════════════════════ */
+  .glass {
+    @apply bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl
+           border border-white/30 dark:border-white/[0.06]
+           shadow-inner-glow;
+  }
+
+  .glass-dark {
+    @apply bg-black/20 backdrop-blur-2xl border border-white/10;
+  }
+
+  /* ═══════════════════════════════════════
+     TEXT EFFECTS
+     ═══════════════════════════════════════ */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-500 via-primary-600 to-gold-500
+           bg-clip-text text-transparent;
+  }
+
+  .gradient-text-gold {
+    @apply bg-gradient-to-r from-gold-400 via-gold-500 to-gold-600
+           bg-clip-text text-transparent;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+
+  /* ═══════════════════════════════════════
+     STAT CARDS — Dashboard metrics
+     ═══════════════════════════════════════ */
+  .stat-card {
+    @apply card-gradient text-center py-5 px-3;
+  }
+  .stat-card .stat-icon {
+    @apply w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3
+           shadow-lg;
+  }
+  .stat-card .stat-value {
+    @apply text-2xl font-extrabold text-gray-900 dark:text-white font-display;
+  }
+  .stat-card .stat-label {
+    @apply text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5 uppercase tracking-wider;
+  }
+
+  /* ═══════════════════════════════════════
+     LOADING
+     ═══════════════════════════════════════ */
+  .skeleton {
+    @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200
+           dark:from-gray-800 dark:via-gray-700 dark:to-gray-800
+           bg-[length:200%_100%] rounded-2xl animate-shimmer;
+  }
+
+  /* ═══════════════════════════════════════
+     LAYOUT
+     ═══════════════════════════════════════ */
+  .page-container {
+    @apply max-w-lg mx-auto px-4 pb-28 pt-4;
+  }
+
+  /* ═══════════════════════════════════════
+     PROGRESS BAR
+     ═══════════════════════════════════════ */
+  .progress-bar {
+    @apply h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden;
+  }
+  .progress-bar-fill {
+    @apply h-full rounded-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-1000 ease-out;
+  }
+
+  /* ═══════════════════════════════════════
+     CHARTS — Pure CSS bar chart
+     ═══════════════════════════════════════ */
+  .chart-bar {
+    @apply rounded-t-lg bg-gradient-to-t from-primary-500 to-primary-400
+           transition-all duration-700 ease-out;
+    min-width: 24px;
+  }
+  .chart-bar-gold {
+    @apply rounded-t-lg bg-gradient-to-t from-gold-500 to-gold-400
+           transition-all duration-700 ease-out;
+    min-width: 24px;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Gradient border utility */
+  .border-gradient {
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+  .border-gradient::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(16,185,129,0.4), rgba(245,158,11,0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+}

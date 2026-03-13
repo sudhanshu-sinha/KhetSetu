@@ -1,0 +1,338 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+const resources = {
+  en: {
+    translation: {
+      // App
+      appName: 'KhetSetu',
+      appNameHi: 'खेतसेतु',
+      tagline: 'Connecting Farmers with Workers',
+      taglineHi: 'किसान और मज़दूर का सेतु',
+
+      // Auth
+      login: 'Login',
+      logout: 'Logout',
+      phone: 'Phone Number',
+      enterPhone: 'Enter your phone number',
+      sendOtp: 'Send OTP',
+      enterOtp: 'Enter OTP',
+      verifyOtp: 'Verify OTP',
+      resendOtp: 'Resend OTP',
+      otpSent: 'OTP sent to your phone',
+      invalidOtp: 'Invalid OTP',
+
+      // Roles
+      selectRole: 'Select Your Role',
+      farmer: 'Farmer',
+      worker: 'Worker',
+      farmerDesc: 'Post jobs and hire workers for your farm',
+      workerDesc: 'Find farm work near you and earn',
+
+      // Profile
+      profile: 'Profile',
+      setupProfile: 'Setup Profile',
+      name: 'Full Name',
+      district: 'District',
+      village: 'Village',
+      pincode: 'Pincode',
+      state: 'State',
+      skills: 'Skills',
+      save: 'Save',
+      editProfile: 'Edit Profile',
+
+      // Navigation
+      home: 'Home',
+      jobs: 'Jobs',
+      myJobs: 'My Jobs',
+      applications: 'Applications',
+      chat: 'Chat',
+      payments: 'Payments',
+
+      // Jobs
+      postJob: 'Post Job',
+      browseJobs: 'Browse Jobs',
+      nearbyJobs: 'Nearby Jobs',
+      jobTitle: 'Job Title',
+      description: 'Description',
+      category: 'Category',
+      wageType: 'Wage Type',
+      wageAmount: 'Wage Amount',
+      startDate: 'Start Date',
+      endDate: 'End Date',
+      workersNeeded: 'Workers Needed',
+      perDay: '/day',
+      perHour: '/hour',
+      perAcre: '/acre',
+      fixed: 'Fixed',
+      daily: 'Daily',
+      hourly: 'Hourly',
+      acre: 'Per Acre',
+      kmAway: 'km away',
+      viewDetails: 'View Details',
+      apply: 'Apply',
+      applied: 'Applied',
+      noJobs: 'No jobs found',
+
+      // Categories
+      sowing: 'Sowing',
+      harvesting: 'Harvesting',
+      weeding: 'Weeding',
+      hoeing: 'Hoeing',
+      irrigation: 'Irrigation',
+      spraying: 'Spraying',
+      plowing: 'Plowing',
+      other: 'Other',
+
+      // Applications
+      pending: 'Pending',
+      accepted: 'Accepted',
+      rejected: 'Rejected',
+      completed: 'Completed',
+      accept: 'Accept',
+      reject: 'Reject',
+      applicants: 'Applicants',
+
+      // Chat
+      typeMessage: 'Type a message...',
+      send: 'Send',
+      noChats: 'No conversations yet',
+
+      // Payments
+      makePayment: 'Make Payment',
+      paymentMethod: 'Payment Method',
+      upi: 'UPI',
+      cash: 'Cash',
+      amount: 'Amount',
+      confirm: 'Confirm',
+
+      // Ratings
+      rateWorker: 'Rate Worker',
+      rateFarmer: 'Rate Farmer',
+      rating: 'Rating',
+      review: 'Review',
+      submit: 'Submit',
+
+      // Common
+      loading: 'Loading...',
+      error: 'Something went wrong',
+      retry: 'Retry',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      search: 'Search',
+      filter: 'Filter',
+      all: 'All',
+      open: 'Open',
+      closed: 'Closed',
+      noData: 'No data available',
+
+      // Dashboard
+      welcome: 'Welcome',
+      activeJobs: 'Active Jobs',
+      totalApplications: 'Total Applications',
+      earnings: 'Earnings',
+      jobsCompleted: 'Jobs Completed',
+      recentActivity: 'Recent Activity',
+      quickActions: 'Quick Actions',
+
+      // Landing
+      heroTitle: 'Find Farm Work. Hire Workers.',
+      heroSubtitle: 'KhetSetu connects farmers with nearby agricultural workers. Post jobs, find opportunities, and grow together.',
+      getStarted: 'Get Started',
+      howItWorks: 'How It Works',
+      step1Title: 'Register with Phone',
+      step1Desc: 'Quick OTP-based login with your phone number',
+      step2Title: 'Post or Find Jobs',
+      step2Desc: 'Farmers post jobs, workers find nearby opportunities',
+      step3Title: 'Connect & Work',
+      step3Desc: 'Chat, hire, work, and get paid securely',
+      features: 'Features',
+      feat1: 'Location-based matching',
+      feat2: 'Real-time chat',
+      feat3: 'Secure UPI payments',
+      feat4: 'Ratings & reviews',
+
+      // Ultra Features
+      analytics: 'Analytics',
+      wallet: 'Wallet',
+      premium: 'Premium',
+      leaderboard: 'Leaderboard',
+      totalEarnings: 'Total Earnings',
+      successRate: 'Success Rate',
+      addMoney: 'Add Money',
+      withdraw: 'Withdraw',
+      transactions: 'Transactions',
+      subscribe: 'Subscribe',
+      badges: 'Badges',
+      rank: 'Rank',
+      weatherGood: 'Good for farming',
+      voiceSearch: 'Voice Search',
+    }
+  },
+  hi: {
+    translation: {
+      appName: 'खेतसेतु',
+      appNameHi: 'खेतसेतु',
+      tagline: 'किसान और मज़दूर का सेतु',
+      taglineHi: 'किसान और मज़दूर का सेतु',
+
+      login: 'लॉगिन',
+      logout: 'लॉगआउट',
+      phone: 'फ़ोन नंबर',
+      enterPhone: 'अपना फ़ोन नंबर डालें',
+      sendOtp: 'OTP भेजें',
+      enterOtp: 'OTP डालें',
+      verifyOtp: 'OTP सत्यापित करें',
+      resendOtp: 'OTP दोबारा भेजें',
+      otpSent: 'आपके फ़ोन पर OTP भेजा गया',
+      invalidOtp: 'गलत OTP',
+
+      selectRole: 'अपनी भूमिका चुनें',
+      farmer: 'किसान',
+      worker: 'मज़दूर',
+      farmerDesc: 'अपने खेत के लिए मज़दूर ढूंढें और काम पोस्ट करें',
+      workerDesc: 'अपने पास खेती का काम ढूंढें और कमाएं',
+
+      profile: 'प्रोफ़ाइल',
+      setupProfile: 'प्रोफ़ाइल बनाएं',
+      name: 'पूरा नाम',
+      district: 'ज़िला',
+      village: 'गाँव',
+      pincode: 'पिनकोड',
+      state: 'राज्य',
+      skills: 'कौशल',
+      save: 'सेव करें',
+      editProfile: 'प्रोफ़ाइल बदलें',
+
+      home: 'होम',
+      jobs: 'काम',
+      myJobs: 'मेरे काम',
+      applications: 'आवेदन',
+      chat: 'चैट',
+      payments: 'पेमेंट',
+
+      postJob: 'काम पोस्ट करें',
+      browseJobs: 'काम ढूंढें',
+      nearbyJobs: 'आस-पास के काम',
+      jobTitle: 'काम का नाम',
+      description: 'विवरण',
+      category: 'श्रेणी',
+      wageType: 'मज़दूरी का प्रकार',
+      wageAmount: 'मज़दूरी',
+      startDate: 'शुरू की तारीख',
+      endDate: 'अंत की तारीख',
+      workersNeeded: 'मज़दूर चाहिए',
+      perDay: '/दिन',
+      perHour: '/घंटा',
+      perAcre: '/एकड़',
+      fixed: 'निश्चित',
+      daily: 'रोज़ाना',
+      hourly: 'प्रति घंटा',
+      acre: 'प्रति एकड़',
+      kmAway: 'किमी दूर',
+      viewDetails: 'विवरण देखें',
+      apply: 'आवेदन करें',
+      applied: 'आवेदन किया',
+      noJobs: 'कोई काम नहीं मिला',
+
+      sowing: 'बुवाई',
+      harvesting: 'कटाई',
+      weeding: 'निराई',
+      hoeing: 'गुड़ाई',
+      irrigation: 'सिंचाई',
+      spraying: 'छिड़काव',
+      plowing: 'जुताई',
+      other: 'अन्य',
+
+      pending: 'लंबित',
+      accepted: 'स्वीकृत',
+      rejected: 'अस्वीकृत',
+      completed: 'पूर्ण',
+      accept: 'स्वीकार करें',
+      reject: 'अस्वीकार करें',
+      applicants: 'आवेदक',
+
+      typeMessage: 'संदेश लिखें...',
+      send: 'भेजें',
+      noChats: 'अभी कोई बात नहीं हुई',
+
+      makePayment: 'भुगतान करें',
+      paymentMethod: 'भुगतान का तरीका',
+      upi: 'UPI',
+      cash: 'नकद',
+      amount: 'राशि',
+      confirm: 'पुष्टि करें',
+
+      rateWorker: 'मज़दूर को रेटिंग दें',
+      rateFarmer: 'किसान को रेटिंग दें',
+      rating: 'रेटिंग',
+      review: 'समीक्षा',
+      submit: 'जमा करें',
+
+      loading: 'लोड हो रहा है...',
+      error: 'कुछ गलत हो गया',
+      retry: 'फिर कोशिश करें',
+      cancel: 'रद्द करें',
+      delete: 'हटाएं',
+      search: 'खोजें',
+      filter: 'फ़िल्टर',
+      all: 'सभी',
+      open: 'खुला',
+      closed: 'बंद',
+      noData: 'कोई डेटा नहीं',
+
+      welcome: 'स्वागत है',
+      activeJobs: 'सक्रिय काम',
+      totalApplications: 'कुल आवेदन',
+      earnings: 'कमाई',
+      jobsCompleted: 'पूरे किए काम',
+      recentActivity: 'हाल की गतिविधि',
+      quickActions: 'त्वरित कार्य',
+
+      heroTitle: 'खेती का काम ढूंढें। मज़दूर ढूंढें।',
+      heroSubtitle: 'खेतसेतु किसानों को पास के खेतिहर मज़दूरों से जोड़ता है। काम पोस्ट करें, अवसर ढूंढें, और मिलकर आगे बढ़ें।',
+      getStarted: 'शुरू करें',
+      howItWorks: 'कैसे काम करता है',
+      step1Title: 'फ़ोन से रजिस्टर करें',
+      step1Desc: 'अपने फ़ोन नंबर से OTP द्वारा आसान लॉगिन',
+      step2Title: 'काम पोस्ट करें या ढूंढें',
+      step2Desc: 'किसान काम पोस्ट करें, मज़दूर पास के अवसर ढूंढें',
+      step3Title: 'जुड़ें और काम करें',
+      step3Desc: 'चैट करें, काम पर रखें, काम करें, और सुरक्षित भुगतान पाएं',
+      features: 'विशेषताएं',
+      feat1: 'स्थान आधारित मिलान',
+      feat2: 'रीयल-टाइम चैट',
+      feat3: 'सुरक्षित UPI भुगतान',
+      feat4: 'रेटिंग और समीक्षा',
+
+      // Ultra Features
+      analytics: 'एनालिटिक्स',
+      wallet: 'वॉलेट',
+      premium: 'प्रीमियम',
+      leaderboard: 'लीडरबोर्ड',
+      totalEarnings: 'कुल कमाई',
+      successRate: 'सफ़लता दर',
+      addMoney: 'पैसे जोड़ें',
+      withdraw: 'निकालें',
+      transactions: 'लेन-देन',
+      subscribe: 'सब्सक्राइब करें',
+      badges: 'बैज',
+      rank: 'रैंक',
+      weatherGood: 'खेती के लिए अच्छा',
+      voiceSearch: 'वॉयस सर्च',
+    }
+  }
+};
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: localStorage.getItem('khetsetu-lang') || 'hi',
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false
+    }
+  });
+
+export default i18n;
