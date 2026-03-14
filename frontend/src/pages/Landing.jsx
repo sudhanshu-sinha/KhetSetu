@@ -289,8 +289,8 @@ export default function Landing() {
 
       {/* ═══ Footer ═══ */}
       <footer className="text-center py-8 text-[11px] text-gray-400 border-t border-gray-200/50 dark:border-white/5">
-        <p className="font-display font-semibold gradient-text mb-1">🌾 KhetSetu Ultra</p>
-        <p>© 2024 खेतसेतु — {t('taglineHi')}</p>
+        <p className="font-display font-semibold gradient-text mb-1">🌾 KhetSetu</p>
+        <p>© 2026 खेतसेतु — {t('taglineHi')}</p>
       </footer>
     </div>
   );
