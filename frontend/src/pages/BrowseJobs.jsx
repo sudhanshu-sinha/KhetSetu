@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import JobCard from '../components/JobCard';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import { FiSearch, FiX } from 'react-icons/fi';
 
 const categories = ['all', 'sowing', 'harvesting', 'weeding', 'hoeing', 'irrigation', 'spraying', 'plowing', 'other'];
 const categoryEmojis = { all: '📋', sowing: '🌱', harvesting: '🌾', weeding: '🌿', hoeing: '⛏️', irrigation: '💧', spraying: '🧴', plowing: '🚜', other: '📦' };
@@ -14,10 +15,15 @@ export default function BrowseJobs() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [jobs, setJobs] = useState([]);
   const [appliedJobStatusMap, setAppliedJobStatusMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('q') || '';
+  });
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -36,8 +42,9 @@ export default function BrowseJobs() {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const params = { page, limit: 10 };
+      const params = { page, limit: 20 };
       if (filter !== 'all') params.category = filter;
+      if (search.trim()) params.search = search.trim();
       const { data } = await api.get('/jobs', { params });
       setJobs(data.jobs);
       setTotalPages(data.pagination.pages);
@@ -48,10 +55,36 @@ export default function BrowseJobs() {
     }
   };
 
+  // Client-side filter by search text (in case backend doesn't support search param)
+  const displayed = search.trim()
+    ? jobs.filter(j =>
+        j.title?.toLowerCase().includes(search.toLowerCase()) ||
+        j.description?.toLowerCase().includes(search.toLowerCase()) ||
+        j.location?.district?.toLowerCase().includes(search.toLowerCase())
+      )
+    : jobs;
+
   return (
     <div className="page-container">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t('browseJobs')}</h1>
+
+        {/* Search bar */}
+        <div className="relative mb-4">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            placeholder={t('search') || 'Search jobs...'}
+            className="input-field pl-9 pr-9"
+          />
+          {search && (
+            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <FiX size={14} />
+            </button>
+          )}
+        </div>
 
         {/* Category filter */}
         <div className="flex gap-2 overflow-x-auto pb-3 mb-4 -mx-4 px-4 scrollbar-hide">
@@ -68,13 +101,13 @@ export default function BrowseJobs() {
         {/* Job list */}
         {loading ? <LoadingSkeleton count={5} /> : (
           <div className="space-y-3">
-            {jobs.length === 0 ? (
+            {displayed.length === 0 ? (
               <div className="card text-center py-12">
                 <span className="text-5xl">🔍</span>
                 <p className="text-sm text-gray-500 mt-3">{t('noJobs')}</p>
               </div>
             ) : (
-              jobs.map(job => (
+              displayed.map(job => (
                 <JobCard key={job._id} job={job} onClick={(j) => navigate(`/job/${j._id}`)} showDistance applicationStatus={appliedJobStatusMap.get(job._id)} />
               ))
             )}

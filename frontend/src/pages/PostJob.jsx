@@ -5,10 +5,22 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-
-const categories = ['sowing', 'harvesting', 'weeding', 'hoeing', 'irrigation', 'spraying', 'plowing', 'other'];
+import { FiMic } from 'react-icons/fi';
+import useVoice from '../hooks/useVoice';const categories = ['sowing', 'harvesting', 'weeding', 'hoeing', 'irrigation', 'spraying', 'plowing', 'other'];
 const categoryEmojis = { sowing: '🌱', harvesting: '🌾', weeding: '🌿', hoeing: '⛏️', irrigation: '💧', spraying: '🧴', plowing: '🚜', other: '📦' };
 const wageTypes = ['daily', 'hourly', 'acre', 'fixed'];
+
+// Hardcoded localized wage dictionary (can be moved to DB later)
+const wageInsights = {
+  sowing: { default: 250, 'Indore': 300, 'Bhopal': 280, 'Ujjain': 260 },
+  harvesting: { default: 350, 'Indore': 400, 'Bhopal': 380, 'Ujjain': 360 },
+  weeding: { default: 200, 'Indore': 250, 'Bhopal': 220, 'Ujjain': 210 },
+  hoeing: { default: 220, 'Indore': 260, 'Bhopal': 240, 'Ujjain': 230 },
+  irrigation: { default: 300, 'Indore': 350, 'Bhopal': 320, 'Ujjain': 310 },
+  spraying: { default: 400, 'Indore': 450, 'Bhopal': 420, 'Ujjain': 410 },
+  plowing: { default: 500, 'Indore': 600, 'Bhopal': 550, 'Ujjain': 520 },
+  other: { default: 250 }
+};
 
 export default function PostJob() {
   const { t } = useTranslation();
@@ -20,6 +32,15 @@ export default function PostJob() {
     title: '', description: '', category: '', wageType: 'daily',
     wageAmount: '', startDate: '', endDate: '', workersNeeded: 1
   });
+
+  const { listen, isListening } = useVoice();
+  const currentLang = localStorage.getItem('khetsetu-lang') === 'en' ? 'en-IN' : 'hi-IN';
+
+  const handleDictate = (field) => {
+    listen((transcript) => {
+      setForm(prev => ({ ...prev, [field]: (prev[field] ? prev[field] + ' ' : '') + transcript }));
+    }, currentLang);
+  };
 
   const updateForm = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -39,7 +60,7 @@ export default function PostJob() {
         }
       });
       toast.success('✅ Job posted!');
-      navigate('/farmer');
+      navigate('/my-jobs');
     } catch (err) {
       const data = err.response?.data;
       if (data?.details?.length) {
@@ -88,12 +109,26 @@ export default function PostJob() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <h2 className="font-semibold text-gray-900 dark:text-white">Job Details</h2>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('jobTitle')}</label>
+                <label className="flex items-center justify-between text-sm font-medium mb-1">
+                  {t('jobTitle')}
+                  <button type="button" onClick={() => handleDictate('title')} 
+                    className={`p-1.5 rounded-full transition-colors ${isListening ? 'text-red-500 bg-red-50 animate-pulse' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-50'}`}
+                    title="Speak Job Title">
+                    <FiMic size={16} />
+                  </button>
+                </label>
                 <input type="text" value={form.title} onChange={e => updateForm('title', e.target.value)}
                   className="input-field" placeholder="e.g. गेहूं की कटाई के लिए मज़दूर चाहिए" />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">{t('description')}</label>
+                <label className="flex items-center justify-between text-sm font-medium mb-1">
+                  {t('description')}
+                  <button type="button" onClick={() => handleDictate('description')} 
+                    className={`p-1.5 rounded-full transition-colors ${isListening ? 'text-red-500 bg-red-50 animate-pulse' : 'text-gray-400 hover:text-primary-500 hover:bg-primary-50'}`}
+                    title="Speak Description">
+                    <FiMic size={16} />
+                  </button>
+                </label>
                 <textarea value={form.description} onChange={e => updateForm('description', e.target.value)}
                   className="input-field h-24 resize-none" placeholder="काम का विवरण..." />
               </div>
@@ -135,6 +170,15 @@ export default function PostJob() {
                 <label className="block text-sm font-medium mb-1">{t('wageAmount')} (₹)</label>
                 <input type="number" value={form.wageAmount} onChange={e => updateForm('wageAmount', e.target.value)}
                   className="input-field" placeholder="500" min="1" />
+                {form.category && user?.location?.district && form.wageType === 'daily' && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} 
+                    className="mt-2 flex items-start gap-2 text-xs p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <span className="text-base leading-none">💡</span>
+                    <p>
+                      <strong>Local Insight:</strong> The average daily wage for {t(form.category)} in {user.location.district} is around <strong>₹{wageInsights[form.category]?.[user.location.district] || wageInsights[form.category]?.default || 300}</strong>.
+                    </p>
+                  </motion.div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">{t('workersNeeded')}</label>

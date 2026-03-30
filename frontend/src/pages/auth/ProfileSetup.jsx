@@ -19,7 +19,9 @@ export default function ProfileSetup() {
     village: user?.location?.village || '',
     pincode: user?.location?.pincode || '',
     state: user?.location?.state || '',
-    skills: user?.skills || []
+    skills: user?.skills || [],
+    isGroupLeader: false,
+    teamSize: 1
   });
   const [loading, setLoading] = useState(false);
 
@@ -64,7 +66,9 @@ export default function ProfileSetup() {
           pincode: form.pincode,
           state: form.state
         },
-        skills: user?.role === 'worker' ? form.skills : undefined
+        skills: user?.role === 'worker' ? form.skills : undefined,
+        isGroupLeader: user?.role === 'worker' ? form.isGroupLeader : undefined,
+        teamSize: user?.role === 'worker' ? parseInt(form.teamSize) : undefined
       });
       toast.success('✅ Profile saved!');
       navigate(user.role === 'farmer' ? '/farmer' : '/worker');
@@ -125,20 +129,34 @@ export default function ProfileSetup() {
 
           {/* Skills (worker only) */}
           {user?.role === 'worker' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('skills')}</label>
-              <div className="flex flex-wrap gap-2">
-                {allSkills.map(skill => (
-                  <button key={skill} onClick={() => handleSkillToggle(skill)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all
-                      ${form.skills.includes(skill)
-                        ? 'bg-primary-500 text-white shadow-md'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
-                      }`}
-                  >
-                    {t(skill)}
-                  </button>
-                ))}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('skills')}</label>
+                <div className="flex flex-wrap gap-2">
+                  {allSkills.map(skill => (
+                    <button key={skill} onClick={() => handleSkillToggle(skill)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all
+                        ${form.skills.includes(skill)
+                          ? 'bg-primary-500 text-white shadow-md'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200'
+                        }`}
+                    >
+                      {t(skill)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                <input type="checkbox" id="isGroupLeader" checked={form.isGroupLeader} 
+                  onChange={e => setForm(p => ({ ...p, isGroupLeader: e.target.checked }))} className="w-5 h-5 text-primary-600 rounded accent-primary-600" />
+                <label htmlFor="isGroupLeader" className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100">I am a Group Leader ('Toli')</label>
+                {form.isGroupLeader && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Team:</span>
+                    <input type="number" value={form.teamSize} onChange={e => setForm(p => ({ ...p, teamSize: e.target.value }))}
+                      className="w-16 p-1 text-center font-bold text-sm border rounded-lg dark:bg-gray-900 border-primary-300 dark:border-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500" min="1" max="100" />
+                  </div>
+                )}
               </div>
             </div>
           )}
