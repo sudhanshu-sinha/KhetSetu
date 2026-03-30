@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { applyToJob, getApplicationsForJob, updateApplicationStatus, getMyApplications, completeApplication, getRecentFarmerApplications } = require('../controllers/applicationController');
+const { applyToJob, getApplicationsForJob, updateApplicationStatus, getMyApplications, completeApplication, getRecentFarmerApplications, withdrawApplication } = require('../controllers/applicationController');
 const { auth, requireRole } = require('../middleware/auth');
 
 // Worker applies to a job
@@ -8,6 +8,9 @@ router.post('/', auth, requireRole('worker'), applyToJob);
 
 // Worker views their applications
 router.get('/my', auth, requireRole('worker'), getMyApplications);
+
+// Worker withdraws their application (pending or accepted only)
+router.delete('/:id', auth, requireRole('worker'), withdrawApplication);
 
 // Farmer views recent applications across all their jobs
 router.get('/farmer-recent', auth, requireRole('farmer'), getRecentFarmerApplications);

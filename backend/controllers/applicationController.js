@@ -1,5 +1,6 @@
 const Application = require('../models/Application');
 const Job = require('../models/Job');
+const { sendSmsFallback } = require('../utils/smsFallback');
 
 /**
  * Apply to a job
@@ -7,7 +8,12 @@ const Job = require('../models/Job');
  */
 exports.applyToJob = async (req, res, next) => {
   try {
-    const { jobId, message } = req.body;
+    const { jobId, message, selectedTeamMembers } = req.body;
+    let { teamSize = 1 } = req.body;
+    
+    if (selectedTeamMembers && Array.isArray(selectedTeamMembers) && selectedTeamMembers.length > 0) {
+      teamSize = selectedTeamMembers.length;
+    }
 
     // Check job exists and is open
     const job = await Job.findById(jobId);
@@ -23,10 +29,18 @@ exports.applyToJob = async (req, res, next) => {
     const existing = await Application.findOne({ job: jobId, worker: req.userId });
     if (existing) return res.status(400).json({ error: 'You have already applied to this job' });
 
+    // Block if teamSize > remaining spots
+    const remainingSpots = job.workersNeeded - job.workersHired;
+    if (teamSize > remainingSpots) {
+      return res.status(400).json({ error: `This job only needs ${remainingSpots} more worker(s). Your team of ${teamSize} is too large.` });
+    }
+
     const application = new Application({
       job: jobId,
       worker: req.userId,
-      message
+      message,
+      teamSize,
+      selectedTeamMembers
     });
     await application.save();
 
@@ -45,7 +59,9 @@ exports.applyToJob = async (req, res, next) => {
         jobId: job._id,
         jobTitle: job.title,
         worker: application.worker,
-        message
+        message,
+        teamSize,
+        selectedTeamMembers
       });
     }
 
@@ -95,7 +111,7 @@ exports.updateApplicationStatus = async (req, res, next) => {
     }
 
     const application = await Application.findById(req.params.id)
-      .populate('job');
+      .populate('job worker');
     if (!application) return res.status(404).json({ error: 'Application not found' });
 
     // Verify farmer owns the job
@@ -109,8 +125,9 @@ exports.updateApplicationStatus = async (req, res, next) => {
 
     // If accepted, increment workers hired
     if (status === 'accepted') {
+      const incrementAmount = application.teamSize || 1;
       await Job.findByIdAndUpdate(application.job._id, {
-        $inc: { workersHired: 1 }
+        $inc: { workersHired: incrementAmount }
       });
 
       // Check if job is fully staffed
@@ -123,13 +140,21 @@ exports.updateApplicationStatus = async (req, res, next) => {
 
     // Emit notification to worker
     const io = req.app.get('io');
+    const workerId = application.worker._id ? application.worker._id.toString() : application.worker.toString();
+    
     if (io) {
-      io.to(application.worker.toString()).emit('application-update', {
+      io.to(workerId).emit('application-update', {
         applicationId: application._id,
         jobId: application.job._id,
         jobTitle: application.job.title,
         status
       });
+    }
+
+    // Trigger SMS Fallback for critical updates
+    if (status === 'accepted' && application.worker.phone) {
+      const message = `KhetSetu App: Great news! Your application for "${application.job.title}" has been accepted. Please check the app to coordinate with the farmer.`;
+      sendSmsFallback(application.worker.phone, message).catch(err => console.error("SMS error:", err));
     }
 
     res.json({ success: true, application });
@@ -255,6 +280,59 @@ exports.getRecentFarmerApplications = async (req, res, next) => {
       .limit(10);
 
     res.json({ success: true, applications });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Worker withdraws application
+ * DELETE /api/applications/:id
+ */
+exports.withdrawApplication = async (req, res, next) => {
+  try {
+    const application = await Application.findById(req.params.id).populate('job');
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+    
+    // Auth
+    if (application.worker.toString() !== req.userId.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    if (['completed', 'rejected'].includes(application.status)) {
+      return res.status(400).json({ error: 'Cannot withdraw this application' });
+    }
+
+    // Adjust job counters
+    if (application.status === 'accepted') {
+      const decrementAmount = application.teamSize || 1;
+      await Job.findByIdAndUpdate(application.job._id, {
+        $inc: { workersHired: -decrementAmount }
+      });
+      
+      const job = await Job.findById(application.job._id);
+      if (job && job.workersHired < job.workersNeeded && job.status === 'in_progress') {
+        job.status = 'open';
+        await job.save();
+      }
+    } else if (application.status === 'pending') {
+      await Job.findByIdAndUpdate(application.job._id, {
+        $inc: { applicationsCount: -1 }
+      });
+    }
+
+    await Application.findByIdAndDelete(req.params.id);
+
+    // Socket notification
+    const io = req.app.get('io');
+    if (io && application.job && application.job.postedBy) {
+      io.to(application.job.postedBy.toString()).emit('application-withdrawn', {
+        applicationId: application._id,
+        jobId: application.job._id
+      });
+    }
+
+    res.json({ success: true, message: 'Application withdrawn' });
   } catch (error) {
     next(error);
   }
