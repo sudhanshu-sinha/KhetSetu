@@ -11,7 +11,7 @@ import WeatherWidget from '../components/ui/WeatherWidget';
 import VoiceSearch from '../components/ui/VoiceSearch';
 import StatsCounter from '../components/ui/StatsCounter';
 import BadgeDisplay, { getBadgesForUser } from '../components/ui/BadgeDisplay';
-import { FiSearch, FiCheckCircle, FiDollarSign, FiStar, FiTrendingUp, FiAward } from 'react-icons/fi';
+import { FiSearch, FiCheckCircle, FiDollarSign, FiStar, FiTrendingUp, FiAward, FiCreditCard } from 'react-icons/fi';
 
 const fadeUp = { hidden: { opacity: 0, y: 15 }, visible: { opacity: 1, y: 0 } };
 
@@ -22,6 +22,7 @@ export default function WorkerDashboard() {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const isHi = i18n.language === 'hi';
 
@@ -29,12 +30,14 @@ export default function WorkerDashboard() {
 
   const fetchData = async () => {
     try {
-      const [jobsRes, appsRes] = await Promise.all([
+      const [jobsRes, appsRes, walletRes] = await Promise.all([
         api.get('/jobs', { params: { limit: 5 } }),
-        api.get('/applications/my', { params: { limit: 5 } })
+        api.get('/applications/my', { params: { limit: 5 } }),
+        api.get('/wallet').catch(() => ({ data: { wallet: { balance: 0 } } }))
       ]);
       setJobs(jobsRes.data.jobs);
       setApplications(appsRes.data.applications);
+      setWalletBalance(walletRes.data.wallet?.balance || 0);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
@@ -115,7 +118,7 @@ export default function WorkerDashboard() {
             <p className="text-sm font-bold text-gray-900 dark:text-white">{isHi ? 'वॉलेट बैलेंस' : 'Wallet Balance'}</p>
             <p className="text-xs text-gray-500">{isHi ? 'टैप करें देखने के लिए' : 'Tap to view'}</p>
           </div>
-          <span className="text-lg font-extrabold text-primary-600 dark:text-primary-400 font-display">₹12.5K</span>
+          <span className="text-lg font-extrabold text-primary-600 dark:text-primary-400 font-display">₹{walletBalance.toLocaleString('en-IN')}</span>
         </motion.div>
 
         {/* Notifications */}
