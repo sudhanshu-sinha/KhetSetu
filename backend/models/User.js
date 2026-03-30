@@ -36,6 +36,20 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['sowing', 'harvesting', 'weeding', 'hoeing', 'irrigation', 'spraying', 'plowing', 'other']
   }],
+  isGroupLeader: {
+    type: Boolean,
+    default: false
+  },
+  teamSize: {
+    type: Number,
+    default: 1,
+    min: 1,
+    max: 100
+  },
+  teamList: [{
+    type: String,
+    trim: true
+  }],
   profilePhoto: {
     type: String,
     default: ''

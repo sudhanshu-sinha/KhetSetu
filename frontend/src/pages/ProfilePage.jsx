@@ -15,8 +15,11 @@ export default function ProfilePage() {
   const [form, setForm] = useState({
     name: user?.name || '', district: user?.location?.district || '',
     village: user?.location?.village || '', pincode: user?.location?.pincode || '',
-    state: user?.location?.state || '', skills: user?.skills || []
+    state: user?.location?.state || '', skills: user?.skills || [],
+    isGroupLeader: user?.isGroupLeader || false, teamSize: user?.teamSize || 1,
+    teamList: user?.teamList || []
   });
+  const [newMember, setNewMember] = useState('');
   const [ratings, setRatings] = useState([]);
 
   useEffect(() => { if (user?._id) fetchRatings(); }, [user]);
@@ -25,10 +28,26 @@ export default function ProfilePage() {
     try { const { data } = await api.get(`/ratings/user/${user._id}`); setRatings(data.ratings); } catch {}
   };
 
+  const handleAddMember = () => {
+    if (newMember.trim() && !form.teamList.includes(newMember.trim())) {
+      setForm(p => ({ ...p, teamList: [...p.teamList, newMember.trim()] }));
+      setNewMember('');
+    }
+  };
+
+  const handleRemoveMember = (member) => {
+    setForm(p => ({ ...p, teamList: p.teamList.filter(m => m !== member) }));
+  };
+
   const handleSave = async () => {
     try {
-      await updateProfile({ name: form.name, location: { district: form.district, village: form.village, pincode: form.pincode, state: form.state },
-        skills: user?.role === 'worker' ? form.skills : undefined });
+      await updateProfile({ 
+        name: form.name, location: { district: form.district, village: form.village, pincode: form.pincode, state: form.state },
+        skills: user?.role === 'worker' ? form.skills : undefined,
+        isGroupLeader: user?.role === 'worker' ? form.isGroupLeader : undefined,
+        teamSize: user?.role === 'worker' ? parseInt(form.teamList.length ? form.teamList.length : form.teamSize) : undefined,
+        teamList: user?.role === 'worker' ? form.teamList : undefined
+      });
       toast.success('✅ Updated!'); setEditing(false);
     } catch { toast.error(t('error')); }
   };
@@ -41,7 +60,14 @@ export default function ProfilePage() {
             {user?.name?.charAt(0) || '?'}
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.name}</h2>
-          <p className="text-sm text-gray-500">{user?.role === 'farmer' ? '🌾 ' + t('farmer') : '👷 ' + t('worker')}</p>
+          <div className="flex flex-col items-center gap-1.5 mt-1">
+            <p className="text-sm font-medium text-gray-500">{user?.role === 'farmer' ? '🌾 ' + t('farmer') : '👷 ' + t('worker')}</p>
+            {user?.role === 'worker' && user?.isGroupLeader && (
+              <span className="text-xs font-bold text-primary-700 dark:text-primary-300 bg-primary-100 dark:bg-primary-900/50 px-3 py-1 rounded-full border border-primary-200 dark:border-primary-800 shadow-sm">
+                👥 Group Leader (Team of {user.teamSize})
+              </span>
+            )}
+          </div>
           <div className="flex items-center justify-center gap-4 mt-3 text-sm text-gray-600 dark:text-gray-400">
             <span className="flex items-center gap-1"><FiPhone size={14} /> {user?.phone}</span>
             <span className="flex items-center gap-1"><FiStar size={14} className="text-amber-500" /> {user?.averageRating?.toFixed(1) || 'N/A'}</span>
@@ -61,13 +87,46 @@ export default function ProfilePage() {
                 <input type="text" value={form.village} onChange={e => setForm(p => ({ ...p, village: e.target.value }))} className="input-field" placeholder={t('village')} />
               </div>
               {user?.role === 'worker' && (
-                <div className="flex flex-wrap gap-2">
-                  {allSkills.map(skill => (
-                    <button key={skill} onClick={() => setForm(p => ({ ...p, skills: p.skills.includes(skill) ? p.skills.filter(s => s !== skill) : [...p.skills, skill] }))}
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${form.skills.includes(skill) ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                      {t(skill)}
-                    </button>
-                  ))}
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {allSkills.map(skill => (
+                      <button key={skill} onClick={() => setForm(p => ({ ...p, skills: p.skills.includes(skill) ? p.skills.filter(s => s !== skill) : [...p.skills, skill] }))}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${form.skills.includes(skill) ? 'bg-primary-500 text-white' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                        {t(skill)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-2 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-3">
+                      <input type="checkbox" id="isGroupLeader" checked={form.isGroupLeader} 
+                        onChange={e => setForm(p => ({ ...p, isGroupLeader: e.target.checked }))} className="w-5 h-5 text-primary-600 rounded accent-primary-600" />
+                      <label htmlFor="isGroupLeader" className="flex-1 text-sm font-medium text-gray-900 dark:text-gray-100">I am a Group Leader ('Toli')</label>
+                      {form.isGroupLeader && form.teamList.length === 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500">Team Size:</span>
+                          <input type="number" value={form.teamSize} onChange={e => setForm(p => ({ ...p, teamSize: e.target.value }))}
+                            className="w-16 p-1 text-center font-bold text-sm border rounded-lg dark:bg-gray-900 border-primary-300 dark:border-primary-800 focus:outline-none focus:ring-2 focus:ring-primary-500" min="1" max="100" />
+                        </div>
+                      )}
+                    </div>
+                    {form.isGroupLeader && (
+                      <div className="w-full mt-2 p-3 bg-white dark:bg-gray-900 border border-primary-100 dark:border-primary-800 rounded-lg">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Team Roster ({form.teamList?.length || 0} members)</p>
+                        <div className="flex gap-2 mb-2">
+                          <input type="text" value={newMember} onChange={e => setNewMember(e.target.value)} 
+                            className="input-field text-xs py-1.5 px-2 flex-1" placeholder="Enter team member name..." />
+                          <button type="button" onClick={handleAddMember} className="btn-primary py-1 px-3 text-xs w-auto">Add</button>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {form.teamList?.map(m => (
+                            <span key={m} className="bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 text-[10px] px-2 py-1 rounded-full flex items-center gap-1 font-medium">
+                              👤 {m} <button type="button" onClick={() => handleRemoveMember(m)} className="text-red-500 hover:text-red-700 dark:hover:text-red-400 font-bold ml-1 text-xs leading-none">×</button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
               <div className="flex gap-2">
@@ -78,7 +137,7 @@ export default function ProfilePage() {
           ) : (
             <div className="text-sm text-gray-600 dark:text-gray-400">
               <p>{user?.location?.village && `${user.location.village}, `}{user?.location?.district}</p>
-              {user?.skills?.length > 0 && <div className="flex flex-wrap gap-1 mt-2">{user.skills.map(s => <span key={s} className="badge-green">{t(s)}</span>)}</div>}
+              {user?.skills?.length > 0 && <div className="flex flex-wrap gap-1 mt-2 mb-2">{user.skills.map(s => <span key={s} className="badge-green">{t(s)}</span>)}</div>}
             </div>
           )}
         </div>

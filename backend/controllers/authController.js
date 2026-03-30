@@ -137,7 +137,7 @@ exports.refreshTokenHandler = async (req, res, next) => {
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, role, location, skills } = req.body;
+    const { name, role, location, skills, isGroupLeader, teamSize, teamList } = req.body;
     const user = req.user;
 
     if (name) user.name = name;
@@ -152,8 +152,11 @@ exports.updateProfile = async (req, res, next) => {
       if (location.pincode) user.location.pincode = location.pincode;
       if (location.state) user.location.state = location.state;
     }
-    if (skills && user.role === 'worker') {
-      user.skills = skills;
+    if (user.role === 'worker') {
+      if (skills) user.skills = skills;
+      if (isGroupLeader !== undefined) user.isGroupLeader = isGroupLeader;
+      if (teamSize !== undefined) user.teamSize = teamSize;
+      if (teamList !== undefined) user.teamList = teamList;
     }
 
     // Check if profile is complete
