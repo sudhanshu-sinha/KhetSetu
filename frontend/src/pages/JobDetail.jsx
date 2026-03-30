@@ -6,8 +6,9 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import toast from 'react-hot-toast';
-import { FiMapPin, FiCalendar, FiUsers, FiDollarSign, FiMessageSquare, FiCheck, FiX, FiCheckCircle } from 'react-icons/fi';
+import { FiMapPin, FiCalendar, FiUsers, FiDollarSign, FiMessageSquare, FiCheck, FiX, FiCheckCircle, FiVolume2 } from 'react-icons/fi';
 import PayoutModal from '../components/PayoutModal';
+import useVoice from '../hooks/useVoice';
 
 const categoryEmojis = { sowing: '🌱', harvesting: '🌾', weeding: '🌿', hoeing: '⛏️', irrigation: '💧', spraying: '🧴', plowing: '🚜', other: '📦' };
 const wageLabels = { daily: '/day', hourly: '/hour', acre: '/acre', fixed: '' };
@@ -23,9 +24,29 @@ export default function JobDetail() {
   const [applying, setApplying] = useState(false);
   const [application, setApplication] = useState(null);
   const [applyMessage, setApplyMessage] = useState('');
+  const [applyTeamSize, setApplyTeamSize] = useState(user?.teamSize || 1);
+  const [selectedMembers, setSelectedMembers] = useState([]);
   
   // Payout details
   const [activePayout, setActivePayout] = useState(null);
+
+  const { speak, isSpeaking, stopSpeaking } = useVoice();
+  
+  // Cleanup speech on unmount
+  useEffect(() => {
+    return () => stopSpeaking();
+  }, [stopSpeaking]);
+
+  const handleListen = () => {
+    if (!job) return;
+    if (isSpeaking) {
+      stopSpeaking();
+    } else {
+      const textToRead = `${job.title}. ${job.description}. ${job.wageAmount} rupees.`;
+      const lang = localStorage.getItem('khetsetu-lang') === 'en' ? 'en-IN' : 'hi-IN';
+      speak(textToRead, lang);
+    }
+  };
 
   const isFarmer = user?.role === 'farmer';
   const isOwner = job?.postedBy?._id === user?._id;
@@ -59,9 +80,19 @@ export default function JobDetail() {
   const handleApply = async () => {
     setApplying(true);
     try {
-      const res = await api.post('/applications', { jobId: id, message: applyMessage });
+      const payload = { jobId: id, message: applyMessage };
+      if (user?.isGroupLeader) {
+        if (selectedMembers.length > 0) {
+          payload.selectedTeamMembers = selectedMembers;
+          payload.teamSize = selectedMembers.length;
+        } else {
+          payload.teamSize = applyTeamSize;
+        }
+      }
+      const res = await api.post('/applications', payload);
       toast.success('✅ Applied!');
       setApplication(res.data.application);
+      fetchJob();
     } catch (err) {
       toast.error(err.response?.data?.error || t('error'));
     } finally {
@@ -127,7 +158,13 @@ export default function JobDetail() {
             </div>
           </div>
 
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{job.description}</p>
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">{job.description}</p>
+            <button onClick={handleListen} title="Listen to Job Details"
+              className={`p-2 rounded-full flex-shrink-0 transition-colors ${isSpeaking ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 animate-pulse' : 'bg-gray-100 text-gray-500 hover:bg-primary-50 hover:text-primary-500 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-primary-900/30'}`}>
+              <FiVolume2 size={18} />
+            </button>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2 text-sm">
@@ -191,6 +228,34 @@ export default function JobDetail() {
               </div>
             ) : (
               <div className="space-y-3">
+                {user?.isGroupLeader && (
+                  <div className="flex flex-col gap-2 bg-primary-50 dark:bg-primary-900/20 p-3 rounded-lg border border-primary-100 dark:border-primary-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-primary-700 dark:text-primary-300 flex items-center gap-1">👥 Group Leader</span>
+                      <p className="text-xs text-gray-500">
+                        {user?.teamList?.length > 0 ? 'Select workers bringing:' : 'How many workers bringing?'}
+                      </p>
+                    </div>
+                    {user?.teamList?.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-2 mt-1">
+                        {user.teamList.map(m => (
+                          <label key={m} className="flex items-center gap-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                            <input type="checkbox" className="accent-primary-600 rounded" 
+                              checked={selectedMembers.includes(m)}
+                              onChange={e => {
+                                if (e.target.checked) setSelectedMembers(p => [...p, m]);
+                                else setSelectedMembers(p => p.filter(x => x !== m));
+                              }} />
+                            {m}
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <input type="number" value={applyTeamSize} onChange={e => setApplyTeamSize(parseInt(e.target.value) || 1)}
+                        className="w-full mt-1 p-2 text-center font-bold text-sm border rounded-lg dark:bg-gray-900 border-primary-300 focus:outline-none focus:ring-2" min="1" max={job.workersNeeded - job.workersHired} />
+                    )}
+                  </div>
+                )}
                 <textarea value={applyMessage} onChange={e => setApplyMessage(e.target.value)}
                   className="input-field h-20 resize-none" placeholder="Write a message to the farmer (optional)..." />
                 <motion.button whileTap={{ scale: 0.97 }} onClick={handleApply} disabled={applying}
@@ -213,7 +278,7 @@ export default function JobDetail() {
               {/* Show Job Completion Progress if any workers are accepted/completed */}
               {applications.some(a => ['accepted', 'completed'].includes(a.status)) && (
                 <div className="text-xs font-semibold text-primary-600 bg-primary-50 dark:bg-primary-900/30 px-3 py-1.5 rounded-full border border-primary-100 dark:border-primary-800">
-                  {applications.filter(a => a.status === 'completed').length} / {job.workersNeeded} Workers Completed
+                  {applications.filter(a => a.status === 'completed').reduce((sum, a) => sum + (a.teamSize || 1), 0)} / {job.workersNeeded} Workers Completed
                 </div>
               )}
             </div>
@@ -237,6 +302,18 @@ export default function JobDetail() {
                           ⭐ {app.worker?.averageRating?.toFixed(1) || 'New'} • {app.worker?.totalJobsCompleted || 0} jobs
                         </p>
                       </div>
+                      {app.teamSize > 1 && (
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="text-xs font-bold text-primary-600 bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full border border-primary-200 dark:border-primary-800">
+                            👥 Team of {app.teamSize}
+                          </span>
+                          {app.selectedTeamMembers?.length > 0 && (
+                            <p className="text-[10px] text-gray-500 max-w-[120px] leading-tight mt-1 truncate">
+                              [{app.selectedTeamMembers.join(', ')}]
+                            </p>
+                          )}
+                        </div>
+                      )}
                       <span className={`badge-${app.status === 'accepted' ? 'green' : app.status === 'rejected' ? 'red' : 'yellow'}`}>
                         {t(app.status)}
                       </span>
@@ -296,7 +373,7 @@ export default function JobDetail() {
       <PayoutModal
         isOpen={!!activePayout}
         onClose={() => setActivePayout(null)}
-        worker={activePayout?.worker}
+        application={activePayout}
         job={job}
         onComplete={handlePayoutComplete}
       />

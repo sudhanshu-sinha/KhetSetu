@@ -21,6 +21,14 @@ const applicationSchema = new mongoose.Schema({
     trim: true,
     maxlength: 500
   },
+  teamSize: {
+    type: Number,
+    default: 1,
+    min: 1
+  },
+  selectedTeamMembers: [{
+    type: String
+  }],
   farmerNote: {
     type: String,
     trim: true,
