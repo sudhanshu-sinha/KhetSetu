@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { FiX, FiDollarSign, FiStar, FiCalendar } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-export default function PayoutModal({ isOpen, onClose, worker, job, onComplete }) {
+export default function PayoutModal({ isOpen, onClose, application, job, onComplete }) {
   const { t } = useTranslation();
-  const [daysWorked, setDaysWorked] = useState('');
+  const [daysWorked, setDaysWorked] = useState('1');
   const [amountPaid, setAmountPaid] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [upi, setUpi] = useState('');
@@ -14,16 +14,29 @@ export default function PayoutModal({ isOpen, onClose, worker, job, onComplete }
   const [review, setReview] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const worker = application?.worker;
+  const teamSize = application?.teamSize || 1;
+
   useEffect(() => {
     if (isOpen && job) {
-      setDaysWorked(job.workersNeeded || 1);
-      setAmountPaid(job.wageAmount || 0); // Suggest base wage
+      setDaysWorked('1');
+      setAmountPaid((job.wageAmount || 0) * teamSize); // Suggest team-scaled base wage
       setPaymentMethod('cash');
       setUpi('');
       setRating(5);
       setReview('');
     }
-  }, [isOpen, job]);
+  }, [isOpen, job, teamSize]);
+
+  const handleDaysChange = (e) => {
+    const days = e.target.value;
+    setDaysWorked(days);
+    if (days && !isNaN(days)) {
+      setAmountPaid((job.wageAmount || 0) * teamSize * Number(days));
+    } else {
+      setAmountPaid('');
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -67,9 +80,16 @@ export default function PayoutModal({ isOpen, onClose, worker, job, onComplete }
               <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center font-bold text-emerald-600">
                 {worker?.name?.charAt(0) || '?'}
               </div>
-              <div>
-                <p className="font-bold text-gray-900 dark:text-white">{worker?.name}</p>
-                <p className="text-xs text-gray-500">Completing work for "{job?.title}"</p>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-gray-900 dark:text-white">{worker?.name}</p>
+                  {teamSize > 1 && (
+                    <span className="text-[10px] font-bold text-primary-700 bg-primary-100 px-2 py-0.5 rounded-full border border-primary-200">
+                      👥 Team of {teamSize}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">Completing work for "{job?.title}"</p>
               </div>
             </div>
 
@@ -79,7 +99,7 @@ export default function PayoutModal({ isOpen, onClose, worker, job, onComplete }
                   <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
                     <FiCalendar /> Units/Days Worked
                   </label>
-                  <input type="number" step="0.5" value={daysWorked} onChange={e => setDaysWorked(e.target.value)} required
+                  <input type="number" step="0.5" value={daysWorked} onChange={handleDaysChange} required
                     className="input-field text-lg font-bold w-full" placeholder="e.g. 3" min="0" />
                 </div>
                 <div>
