@@ -38,6 +38,9 @@ const applicationSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  attendanceDays: [{
+    type: String // ISO Dates e.g., '2023-11-20'
+  }],
   amountPaid: {
     type: Number,
     default: 0

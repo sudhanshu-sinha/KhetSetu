@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { applyToJob, getApplicationsForJob, updateApplicationStatus, getMyApplications, completeApplication, getRecentFarmerApplications, withdrawApplication } = require('../controllers/applicationController');
+const { applyToJob, getApplicationsForJob, updateApplicationStatus, getMyApplications, completeApplication, getRecentFarmerApplications, withdrawApplication, logAttendance } = require('../controllers/applicationController');
 const { auth, requireRole } = require('../middleware/auth');
 
 // Worker applies to a job
@@ -23,5 +23,8 @@ router.put('/:id/status', auth, requireRole('farmer'), updateApplicationStatus);
 
 // Farmer marks application as completed
 router.put('/:id/complete', auth, requireRole('farmer'), completeApplication);
+
+// Worker logs attendance via QR mock
+router.put('/:id/attendance', auth, requireRole('worker'), logAttendance);
 
 module.exports = router;

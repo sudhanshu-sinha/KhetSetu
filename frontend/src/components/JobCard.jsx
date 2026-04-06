@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { FiMapPin, FiCalendar, FiUsers } from 'react-icons/fi';
+import { FiMapPin, FiCalendar, FiUsers, FiShare2 } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 
 const categoryEmojis = { sowing: '🌱', harvesting: '🌾', weeding: '🌿', hoeing: '⛏️', irrigation: '💧', spraying: '🧴', plowing: '🚜', other: '📦' };
 const wageLabels = { daily: '/day', hourly: '/hr', acre: '/acre', fixed: '' };
@@ -11,6 +12,12 @@ export default function JobCard({ job, onClick, showDistance = false, applicatio
   const formatDate = (d) => {
     if (!d) return '';
     return new Date(d).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short' });
+  };
+
+  const handleShare = (e) => {
+    e.stopPropagation();
+    const text = `🚜 *New Job on KhetSetu*\n*${job.title}*\n💰 Wage: ₹${job.wageAmount}${wageLabels[job.wageType]}\n📍 Location: ${job.location?.village || job.location?.district}\n🗓️ Starts: ${formatDate(job.startDate)}\n\n*Apply here:* 🔗 https://khetsetu.app/job/${job._id}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -58,21 +65,30 @@ export default function JobCard({ job, onClick, showDistance = false, applicatio
             </span>
           </div>
 
-          {/* Meta row */}
-          <div className="flex items-center gap-3 mt-2">
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <FiMapPin size={11} className="text-red-400" />
-              {job.location?.village || job.location?.district || '—'}
-            </span>
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <FiCalendar size={11} className="text-gold-500" />
-              {formatDate(job.startDate)}
-            </span>
-            {showDistance && job.distance && (
-              <span className="text-[11px] text-primary-500 font-medium">
-                📍 {job.distance.toFixed(1)} km
+          {/* Meta row & Share */}
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <FiMapPin size={11} className="text-red-400" />
+                {job.location?.village || job.location?.district || '—'}
               </span>
-            )}
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                <FiCalendar size={11} className="text-gold-500" />
+                {formatDate(job.startDate)}
+              </span>
+              {showDistance && job.distance && (
+                <span className="text-[11px] text-primary-500 font-medium">
+                  📍 {job.distance.toFixed(1)} km
+                </span>
+              )}
+            </div>
+            <button 
+              onClick={handleShare}
+              className="p-1.5 rounded-full bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 hover:bg-green-100 transition-colors"
+              title="Share to WhatsApp"
+            >
+              <FaWhatsapp size={14} />
+            </button>
           </div>
         </div>
       </div>

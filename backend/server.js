@@ -20,6 +20,9 @@ const ratingPaymentRoutes = require('./routes/ratingPayment');
 const walletRoutes = require('./routes/wallet');
 const analyticsRoutes = require('./routes/analytics');
 const weatherRoutes = require('./routes/weather');
+const disputesRoutes = require('./routes/disputes');
+const equipmentRoutes = require('./routes/equipment');
+const loansRoutes = require('./routes/loans');
 
 const app = express();
 const server = http.createServer(app);
@@ -85,6 +88,9 @@ app.use('/api', ratingPaymentRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/weather', weatherRoutes);
+app.use('/api/disputes', disputesRoutes);
+app.use('/api/equipment', equipmentRoutes);
+app.use('/api/loans', loansRoutes);
 
 // 404 handler
 app.use((req, res) => {

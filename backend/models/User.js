@@ -72,6 +72,19 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  kycStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected', 'none'],
+    default: 'none'
+  },
+  aadhaarNumber: {
+    type: String,
+    match: [/^\d{12}$/, 'Please enter a valid 12-digit Aadhaar number']
+  },
   otp: {
     code: String,
     expiresAt: Date

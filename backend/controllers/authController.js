@@ -172,6 +172,32 @@ exports.updateProfile = async (req, res, next) => {
 };
 
 /**
+ * MOCK: Verify Aadhaar KYC
+ * POST /api/auth/verify-kyc
+ */
+exports.verifyKyc = async (req, res, next) => {
+  try {
+    const { aadhaarNumber } = req.body;
+    const user = req.user;
+
+    if (!/^\d{12}$/.test(aadhaarNumber)) {
+      return res.status(400).json({ error: 'Please enter a valid 12-digit Aadhaar number' });
+    }
+
+    // Mock an instant successful verification
+    user.aadhaarNumber = aadhaarNumber;
+    user.kycStatus = 'verified';
+    user.isVerified = true;
+    
+    await user.save();
+    
+    res.json({ success: true, message: 'KYC verified successfully', user: user.toJSON() });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get current user profile
  * GET /api/auth/me
  */

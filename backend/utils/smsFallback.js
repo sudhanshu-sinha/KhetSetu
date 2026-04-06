@@ -1,51 +1,56 @@
 /**
- * SMS Fallback Utility for KhetSetu
- * Handles sending critical SMS alerts via external gateway (Twilio/MSG91) or mocked locally
+ * SMS Utility for KhetSetu
+ * Handles Fast2SMS API integration for Indian OTP Delivery
  */
 
 const sendSmsFallback = async (phone, message) => {
-  // Can be controlled via environment variables
-  const provider = process.env.SMS_PROVIDER || 'mock'; // options: 'twilio', 'msg91', 'mock'
-  
+  const isDev = process.env.NODE_ENV === 'development';
+  const apiKey = process.env.FAST2SMS_API_KEY;
+
+  if (isDev && !apiKey) {
+    console.log(`\n======================================`);
+    console.log(`[MOCK OTP SMS] To: ${phone}`);
+    console.log(`Message: ${message}`);
+    console.log(`(Add FAST2SMS_API_KEY in .env to send real SMS)`);
+    console.log(`======================================\n`);
+    return { success: true, mock: true };
+  }
+
+  if (!apiKey) {
+    console.warn(`[SMS Warning] No FAST2SMS_API_KEY found, but running in production. Skipping SMS.`);
+    return { success: false, error: 'API Key missing' };
+  }
+
+  // Remove +91 as Fast2SMS expects 10-digit number
+  const normalizedPhone = phone.replace('+91', '').trim();
+
   try {
-    // In development or if explicitly mocked, just log it out nicely
-    if (provider === 'mock' || process.env.NODE_ENV === 'development') {
-      console.log(`\n======================================`);
-      console.log(`[SMS FALLBACK MOCK]`);
-      console.log(`To: ${phone}`);
-      console.log(`Message: ${message}`);
-      console.log(`======================================\n`);
-      return { success: true, mock: true };
+    const response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+      method: 'POST',
+      headers: {
+        'authorization': apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        route: 'q',
+        message: message,
+        language: 'english',
+        flash: 0,
+        numbers: normalizedPhone
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.return) {
+      throw new Error(data.message || 'SMS delivery failed at gateway');
     }
 
-    if (provider === 'twilio') {
-      // Prepared Twilio Implementation
-      if (!process.env.TWILIO_ACCOUNT_SID) {
-        console.warn('TWILIO_ACCOUNT_SID missing. Falling back to log.');
-        console.log(`[Twilio Fallback] To: ${phone} | Msg: ${message}`);
-        return { success: true, mock: true };
-      }
-      
-      // const twilio = require('twilio')(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-      // await twilio.messages.create({
-      //   body: message,
-      //   from: process.env.TWILIO_PHONE,
-      //   to: phone
-      // });
-      
-      console.log(`[PROD API SMS via Twilio] sent to ${phone}`);
-      return { success: true };
-    }
-
-    if (provider === 'msg91') {
-      // Prepared MSG91 Implementation
-      console.log(`[PROD API SMS via MSG91] sent to ${phone}`);
-      return { success: true };
-    }
-
-    return { success: false, error: 'Unknown provider configured' };
+    console.log(`[FAST2SMS SUCCESS] Sent OTP to ${normalizedPhone} ✓`);
+    return { success: true };
+    
   } catch (err) {
-    console.error(`[SMS Error] Failed to send SMS to ${phone}:`, err.message);
+    console.error(`[FAST2SMS ERROR] Failed to send to ${normalizedPhone}:`, err.message);
     return { success: false, error: err.message };
   }
 };

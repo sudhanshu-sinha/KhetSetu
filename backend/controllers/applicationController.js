@@ -263,6 +263,42 @@ exports.completeApplication = async (req, res, next) => {
 };
 
 /**
+ * Log Daily Attendance via QR Code mock
+ * PUT /api/applications/:id/attendance
+ */
+exports.logAttendance = async (req, res, next) => {
+  try {
+    const application = await Application.findById(req.params.id);
+    if (!application) return res.status(404).json({ error: 'Application not found' });
+    
+    // Auth Worker
+    if (application.worker.toString() !== req.userId.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const todayDate = new Date().toISOString().split('T')[0];
+    
+    if (application.attendanceDays && application.attendanceDays.includes(todayDate)) {
+      return res.status(400).json({ error: 'Already checked in for today' });
+    }
+
+    if (!application.attendanceDays) {
+      application.attendanceDays = [];
+    }
+
+    application.attendanceDays.push(todayDate);
+    // Auto-increment the days worked based on attendance log
+    application.daysWorked = application.attendanceDays.length;
+    
+    await application.save();
+
+    res.json({ success: true, message: 'Clocked in successfully!', application });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get recent applications across all farmer's jobs
  * GET /api/applications/farmer-recent
  */

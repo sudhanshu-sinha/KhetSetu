@@ -6,7 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../utils/api';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import toast from 'react-hot-toast';
-import { FiMapPin, FiCalendar, FiUsers, FiDollarSign, FiMessageSquare, FiCheck, FiX, FiCheckCircle, FiVolume2 } from 'react-icons/fi';
+import { FiMapPin, FiCalendar, FiUsers, FiDollarSign, FiMessageSquare, FiCheck, FiX, FiCheckCircle, FiVolume2, FiShare2, FiAlertCircle, FiMaximize, FiAlertTriangle } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 import PayoutModal from '../components/PayoutModal';
 import useVoice from '../hooks/useVoice';
 
@@ -30,6 +31,12 @@ export default function JobDetail() {
   // Payout details
   const [activePayout, setActivePayout] = useState(null);
 
+  // v2 Feature Modals
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  const [disputeReason, setDisputeReason] = useState('');
+
   const { speak, isSpeaking, stopSpeaking } = useVoice();
   
   // Cleanup speech on unmount
@@ -46,6 +53,13 @@ export default function JobDetail() {
       const lang = localStorage.getItem('khetsetu-lang') === 'en' ? 'en-IN' : 'hi-IN';
       speak(textToRead, lang);
     }
+  };
+
+  const handleShare = () => {
+    if (!job) return;
+    const formatDate = (d) => new Date(d).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short' });
+    const text = `🚜 *New Job on KhetSetu*\n*${job.title}*\n💰 Wage: ₹${job.wageAmount}${wageLabels[job.wageType]}\n📍 Location: ${job.location?.village || job.location?.district}\n🗓️ Starts: ${formatDate(job.startDate)}\n\n*Apply here:* 🔗 https://khetsetu.app/job/${job._id}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const isFarmer = user?.role === 'farmer';
@@ -140,6 +154,37 @@ export default function JobDetail() {
     } catch { toast.error(t('error')); }
   };
 
+  const handleClockIn = async () => {
+    if (!application) return;
+    if (otpInput.toUpperCase() !== id.substring(0,4).toUpperCase()) {
+      return toast.error('Incorrect Daily Code');
+    }
+    try {
+      await api.put(`/applications/${application._id}/attendance`);
+      toast.success('Successfully clocked in for today! 🎯');
+      setOtpInput('');
+      fetchJob();
+    } catch (err) {
+      toast.error(err.response?.data?.error || t('error'));
+    }
+  };
+
+  const submitDispute = async () => {
+    if (!disputeReason) return toast.error('Please provide a reason');
+    try {
+      await api.post('/disputes', {
+        jobId: id,
+        applicationId: application?._id || applications[0]?._id, // rough mock
+        reason: disputeReason
+      });
+      toast.success('Dispute ticket raised. Admin will contact you shortly.');
+      setShowDisputeModal(false);
+      setDisputeReason('');
+    } catch (err) {
+      toast.error(t('error'));
+    }
+  };
+
   if (loading) return <div className="page-container"><LoadingSkeleton count={1} /><LoadingSkeleton type="profile" /></div>;
   if (!job) return <div className="page-container text-center py-12"><p>Job not found</p></div>;
 
@@ -160,10 +205,16 @@ export default function JobDetail() {
 
           <div className="flex items-start justify-between gap-4 mb-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">{job.description}</p>
-            <button onClick={handleListen} title="Listen to Job Details"
-              className={`p-2 rounded-full flex-shrink-0 transition-colors ${isSpeaking ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 animate-pulse' : 'bg-gray-100 text-gray-500 hover:bg-primary-50 hover:text-primary-500 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-primary-900/30'}`}>
-              <FiVolume2 size={18} />
-            </button>
+            <div className="flex gap-2">
+              <button onClick={handleShare} title="Share to WhatsApp"
+                className="p-2 rounded-full flex-shrink-0 bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400 hover:bg-green-100 transition-colors">
+                <FaWhatsapp size={18} />
+              </button>
+              <button onClick={handleListen} title="Listen to Job Details"
+                className={`p-2 rounded-full flex-shrink-0 transition-colors ${isSpeaking ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400 animate-pulse' : 'bg-gray-100 text-gray-500 hover:bg-primary-50 hover:text-primary-500 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-primary-900/30'}`}>
+                <FiVolume2 size={18} />
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -225,6 +276,37 @@ export default function JobDetail() {
                    application.status === 'accepted' ? 'Your application was accepted by the farmer!' :
                    application.status === 'completed' ? 'This job has been marked as completed.' : 'Your application was not selected.'}
                 </p>
+
+                {/* Tracking & Tools for Active Applications */}
+                {['accepted', 'completed'].includes(application.status) && (
+                  <div className="mt-4 border-t border-gray-100 dark:border-gray-800 pt-4">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="text-left">
+                        <p className="text-xs font-semibold text-gray-500">Days Clocked-in</p>
+                        <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{application.daysWorked || 0}</p>
+                      </div>
+                      <button onClick={() => setShowDisputeModal(true)} className="flex items-center gap-1 text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded-full font-bold">
+                        <FiAlertCircle /> SOS / Dispute
+                      </button>
+                    </div>
+
+                    {application.status === 'accepted' && (
+                      <div className="flex gap-2">
+                         <input 
+                          type="text" 
+                          value={otpInput} 
+                          onChange={(e) => setOtpInput(e.target.value)} 
+                          placeholder="4-Digit Code" 
+                          className="input-field text-center tracking-widest font-bold flex-1"
+                          maxLength={4}
+                        />
+                        <button onClick={handleClockIn} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                          <FiMaximize /> Clock-In
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-3">
@@ -277,8 +359,13 @@ export default function JobDetail() {
               </h2>
               {/* Show Job Completion Progress if any workers are accepted/completed */}
               {applications.some(a => ['accepted', 'completed'].includes(a.status)) && (
-                <div className="text-xs font-semibold text-primary-600 bg-primary-50 dark:bg-primary-900/30 px-3 py-1.5 rounded-full border border-primary-100 dark:border-primary-800">
-                  {applications.filter(a => a.status === 'completed').reduce((sum, a) => sum + (a.teamSize || 1), 0)} / {job.workersNeeded} Workers Completed
+                <div className="flex flex-col gap-2 items-end">
+                  <div className="text-xs font-semibold text-primary-600 bg-primary-50 dark:bg-primary-900/30 px-3 py-1.5 rounded-full border border-primary-100 dark:border-primary-800">
+                    {applications.filter(a => a.status === 'completed').reduce((sum, a) => sum + (a.teamSize || 1), 0)} / {job.workersNeeded} Workers Completed
+                  </div>
+                  <button onClick={() => setShowQRModal(true)} className="text-[10px] bg-gray-800 text-white rounded-full px-3 py-1.5 font-bold shadow-md hover:bg-black transition-colors">
+                    Show Daily QR
+                  </button>
                 </div>
               )}
             </div>
@@ -377,6 +464,48 @@ export default function JobDetail() {
         job={job}
         onComplete={handlePayoutComplete}
       />
+
+      {/* Daily Attendance QR Modal */}
+      {showQRModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-sm relative text-center">
+            <button onClick={() => setShowQRModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-gray-900"><FiX /></button>
+            <h2 className="text-lg font-bold mb-1">Daily Attendance QR</h2>
+            <p className="text-sm text-gray-500 mb-6">Ask workers to scan this to clock-in for the day.</p>
+            
+            <div className="w-48 h-48 mx-auto bg-gray-100 border-4 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center mb-4">
+              <span className="text-4xl mb-2">📷</span>
+              <span className="font-bold text-gray-400 text-xs tracking-widest">[QR MOCK]</span>
+            </div>
+
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-200 dark:border-gray-700">
+              <p className="text-xs text-gray-500 mb-1">Or use manual 4-digit code fallback:</p>
+              <p className="text-3xl font-display font-black tracking-widest text-gray-900 dark:text-white uppercase">{id.substring(0,4)}</p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Dispute Modal */}
+      {showDisputeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-sm relative">
+            <button onClick={() => setShowDisputeModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-500 hover:text-gray-900"><FiX /></button>
+            <div className="flex items-center gap-3 mb-4 text-red-500">
+              <FiAlertTriangle size={24} />
+              <h2 className="text-lg font-bold">Raise Dispute / SOS</h2>
+            </div>
+            <p className="text-sm text-gray-500 mb-4">Are you facing an issue with this job or worker? Describe below, and our support team will intervene.</p>
+            <textarea 
+              value={disputeReason} 
+              onChange={e => setDisputeReason(e.target.value)}
+              className="input-field h-24 mb-4 resize-none"
+              placeholder="E.g. Worker didn't show up, Payment was delayed..."
+            />
+            <button onClick={submitDispute} className="btn-danger w-full">Submit Ticket</button>
+           </motion.div>
+        </div>
+      )}
     </div>
   );
 }

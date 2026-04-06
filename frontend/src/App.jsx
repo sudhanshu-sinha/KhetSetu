@@ -23,6 +23,8 @@ import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import WalletPage from './pages/WalletPage';
 import PremiumPlans from './pages/PremiumPlans';
 import LeaderboardPage from './pages/LeaderboardPage';
+import EcosystemHub from './pages/EcosystemHub';
+import AgriReels from './pages/AgriReels';
 
 export default function App() {
   const { isAuthenticated, user, loading } = useAuth();
@@ -71,6 +73,8 @@ export default function App() {
         <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
         <Route path="/premium" element={<ProtectedRoute><PremiumPlans /></ProtectedRoute>} />
         <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+        <Route path="/hub" element={<ProtectedRoute><EcosystemHub /></ProtectedRoute>} />
+        <Route path="/reels" element={<ProtectedRoute><AgriReels /></ProtectedRoute>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" />} />

@@ -13,6 +13,7 @@ export default function PayoutModal({ isOpen, onClose, application, job, onCompl
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showRazorpayMock, setShowRazorpayMock] = useState(false);
 
   const worker = application?.worker;
   const teamSize = application?.teamSize || 1;
@@ -44,16 +45,26 @@ export default function PayoutModal({ isOpen, onClose, application, job, onCompl
     e.preventDefault();
     if (!daysWorked || !amountPaid) return toast.error('Please fill required fields (Days, Amount)');
     
+    if (paymentMethod === 'razorpay') {
+      setShowRazorpayMock(true);
+      return;
+    }
+
+    processComplete();
+  };
+
+  const processComplete = async () => {
     setSubmitting(true);
     await onComplete({
       daysWorked: Number(daysWorked),
       amountPaid: Number(amountPaid),
       paymentMethod,
-      upiTransactionId: paymentMethod === 'upi' ? upi : undefined,
+      upiTransactionId: paymentMethod === 'upi' ? upi : paymentMethod === 'razorpay' ? 'RZP_' + Date.now() : undefined,
       rating,
       review
     });
     setSubmitting(false);
+    setShowRazorpayMock(false);
   };
 
   return (
@@ -113,14 +124,18 @@ export default function PayoutModal({ isOpen, onClose, application, job, onCompl
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Payment Method</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button type="button" onClick={() => setPaymentMethod('cash')}
-                    className={`p-2.5 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === 'cash' ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-500/10' : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400'}`}>
+                    className={`p-2 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === 'cash' ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-500/10' : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400'}`}>
                     💵 Cash
                   </button>
                   <button type="button" onClick={() => setPaymentMethod('upi')}
-                    className={`p-2.5 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === 'upi' ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10' : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400'}`}>
-                    📱 UPI (External)
+                    className={`p-2 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === 'upi' ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-500/10' : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400'}`}>
+                    📱 UPI
+                  </button>
+                  <button type="button" onClick={() => setPaymentMethod('razorpay')}
+                    className={`p-2 rounded-xl text-sm font-medium border-2 transition-all ${paymentMethod === 'razorpay' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10' : 'border-gray-200 text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400'}`}>
+                    💳 Pay Online
                   </button>
                 </div>
               </div>
@@ -156,11 +171,41 @@ export default function PayoutModal({ isOpen, onClose, application, job, onCompl
 
           <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0">
             <button form="payout-form" type="submit" disabled={submitting}
-              className="w-full btn-primary bg-gradient-to-r from-emerald-500 to-teal-600 py-3 shadow-glow-green">
-              {submitting ? 'Processing...' : 'Complete & Pay Worker'}
+              className={`w-full btn-primary ${paymentMethod === 'razorpay' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30' : 'bg-gradient-to-r from-emerald-500 to-teal-600 shadow-glow-green'} py-3`}>
+              {submitting ? 'Processing...' : paymentMethod === 'razorpay' ? 'Pay Securely via Razorpay' : 'Complete & Pay Worker'}
             </button>
           </div>
         </motion.div>
+
+        {/* Fake Razorpay Overlay */}
+        {showRazorpayMock && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80">
+            <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} className="bg-white w-full max-w-[360px] h-[580px] rounded-lg shadow-2xl overflow-hidden flex flex-col relative">
+              <div className="bg-gray-900 text-white p-4 flex items-center justify-between">
+                <span className="font-bold text-lg tracking-wider">RAZORPAY</span>
+                <button onClick={() => setShowRazorpayMock(false)}><FiX size={20}/></button>
+              </div>
+              <div className="p-6 flex-1 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4">
+                  <FiDollarSign size={32} />
+                </div>
+                <h3 className="text-xl font-bold mb-2">₹{amountPaid}</h3>
+                <p className="text-gray-500 text-sm mb-8">Payment to KhetSetu Worker</p>
+                <div className="w-full space-y-3">
+                  <button onClick={processComplete} className="w-full bg-blue-600 text-white py-3 rounded-md font-bold text-sm tracking-wide hover:bg-blue-700 transition-colors">
+                    SIMULATE SUCCESS
+                  </button>
+                  <button onClick={() => setShowRazorpayMock(false)} className="w-full bg-gray-100 text-gray-600 py-3 rounded-md font-bold text-sm hover:bg-gray-200 transition-colors">
+                    SIMULATE FAILURE
+                  </button>
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 text-center text-xs text-gray-400 font-medium border-t">
+                Secured by Razorpay API Mock
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </AnimatePresence>
   );

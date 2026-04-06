@@ -5,7 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useSocket } from '../contexts/SocketContext';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { FiHome, FiSearch, FiMessageSquare, FiUser, FiPlusCircle, FiSun, FiMoon, FiBriefcase, FiBarChart2 } from 'react-icons/fi';
+import { FiHome, FiSearch, FiMessageSquare, FiUser, FiPlusCircle, FiSun, FiMoon, FiBriefcase, FiBarChart2, FiStar, FiFilm } from 'react-icons/fi';
 
 export default function Navbar() {
   const { t, i18n } = useTranslation();
@@ -34,15 +34,15 @@ export default function Navbar() {
   const navItems = isFarmer ? [
     { path: '/farmer', icon: FiHome, label: t('home') },
     { path: '/my-jobs', icon: FiBriefcase, label: t('myJobs') },
-    { path: '/analytics', icon: FiBarChart2, label: t('analytics') },
+    { path: '/hub', icon: FiStar, label: 'Services' },
     { path: '/chats', icon: FiMessageSquare, label: t('chat'), badge: unreadMessages },
-    { path: '/profile', icon: FiUser, label: t('profile') },
+    { path: '/reels', icon: FiFilm, label: 'Reels' },
   ] : [
     { path: '/worker', icon: FiHome, label: t('home') },
     { path: '/browse-jobs', icon: FiSearch, label: t('jobs') },
-    { path: '/my-applications', icon: FiBriefcase, label: t('applications') },
+    { path: '/hub', icon: FiStar, label: 'Services' },
     { path: '/chats', icon: FiMessageSquare, label: t('chat'), badge: unreadMessages },
-    { path: '/profile', icon: FiUser, label: t('profile') },
+    { path: '/reels', icon: FiFilm, label: 'Reels' },
   ];
 
   // Hide on auth/landing pages
@@ -73,6 +73,17 @@ export default function Navbar() {
               className="p-2 rounded-xl bg-white/60 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 hover:border-primary-300 transition-all">
               {darkMode ? <FiSun size={14} className="text-gold-400" /> : <FiMoon size={14} />}
             </button>
+            <NavLink to="/profile"
+              className={({ isActive }) =>
+                `p-2 rounded-xl border transition-all ${
+                  isActive
+                    ? 'bg-primary-500/10 border-primary-400/40 text-primary-500'
+                    : 'bg-white/60 dark:bg-white/5 border-gray-200/50 dark:border-white/10 hover:border-primary-300 text-gray-500 dark:text-gray-400'
+                }`
+              }
+            >
+              <FiUser size={14} />
+            </NavLink>
           </div>
         </div>
       </motion.header>
